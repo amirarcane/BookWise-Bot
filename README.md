@@ -1,7 +1,7 @@
 # BookWise Bot
 
 ## Overview
-BookWise Bot is a Streamlit-based web application designed for an online bookstore. It serves as an interactive chatbot that assists users in finding books, making recommendations, handling cart management, and answering questions related to the store's offerings. The bot is equipped to manage cart actions, inform about store policies, and ensure a pleasant user experience. It uses Openai GPT-4 as its model and Elasticsearch for the database.
+BookWise Bot is a Streamlit-based web application designed for an online bookstore. It serves as an interactive chatbot that assists users in finding books, making recommendations, handling cart management, and answering questions related to the store's offerings. The bot is equipped to manage cart actions, inform about store policies, and ensure a pleasant user experience. It uses Openai `GPT-4` as its model and `Elasticsearch` for the database.
 
 ## Features
 Interactive Chat Interface: Engage with users through a simple and intuitive chat interface.
