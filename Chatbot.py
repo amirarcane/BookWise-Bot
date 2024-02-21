@@ -1,21 +1,26 @@
+import os
 import re
 import time
 import openai
+
+from dotenv import load_dotenv
 from CartManager import CartManager
+from ElasticsearchManager import ElasticsearchManager
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 class Chatbot:
     """A chatbot capable of handling user queries and managing a shopping cart."""
 
-    def __init__(self, openai_api_key):
+    def __init__(self):
         """
-        Initialize a Chatbot object.
-
-        :param openai_api_key: The API key for OpenAI services.
-        :type openai_api_key: str
+        Initialize a Chatbot object by reading the OpenAI API key from a YAML file.
         """
+        self.es = ElasticsearchManager()
         self.cart_manager = CartManager()
-        openai.api_key = openai_api_key
+        openai.api_key = os.getenv("OPENAI_API_KEY")
 
     def handle_query(self, messages, query):
         """
@@ -31,9 +36,27 @@ class Chatbot:
         """
         query_lower = query.lower()
         messages, response = self.generate_response(messages, query_lower)
-        action, title, response = self.extract_action(response)
+        action, title, author, genre, response = self.extract_action(response)
 
-        if action == "Add_to_Cart":
+        if action == "Search":
+            books = self.es.search_book(title=title, author=author, genre=genre)
+            num_books = len(books)
+
+            if num_books > 1:
+                # Format the book details into a string, each on a new line
+                books_details = "\n".join(
+                    [f"{idx + 1}. Title: {book['title']}, Author: {book['author']}, Genre: {book['genre']}"
+                     for idx, book in enumerate(books)])
+                response += f"\nI found multiple books:\n{books_details}\n\nWhich one do you mean?"
+            elif num_books == 1:
+                book = books[0]  # Get the single book found
+                response += f"\nI found the book: Title: {book['title']}, Author: {book['author']}, Genre: {book['genre']}. Would you like to add it to the cart?"
+            else:
+                response += "\nI couldn't find any books matching your criteria."
+
+            # Ensure the response is part of the conversation history
+            messages.append({"role": "assistant", "content": response})
+        elif action == "Add_to_Cart":
             self.add_to_cart(title)
         elif action == "Remove_from_Cart":
             self.remove_from_cart(title)
@@ -91,13 +114,11 @@ class Chatbot:
         """
         messages.append({"role": "user", "content": user_query})
 
-        completion = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=messages,
-            temperature=temperature
-        )
+        completion = openai.ChatCompletion.create(model="gpt-4",
+                                                  messages=messages,
+                                                  temperature=temperature)
 
-        ai_response = completion.choices[0].message['content']
+        ai_response = completion.choices[0].message.content
         messages.append({"role": "assistant", "content": ai_response})
 
         return messages, ai_response
@@ -114,12 +135,16 @@ class Chatbot:
         """
         action = ""
         book_title = ""
-        pattern = r"\[ACTION: (.*?); BOOK_TITLE: (.*?)\]"
+        author = ""
+        genre = ""
+        pattern = r"\[ACTION: (.*?); BOOK_TITLE: (.*?); AUTHOR: (.*?); GENRE: (.*?)\]"
         matches = re.findall(pattern, text)
 
         if matches:
             for match in matches:
-                action, book_title = match
-                text = text.replace("[ACTION: " + action + "; BOOK_TITLE: " + book_title + "]", "")
+                action, book_title, author, genre = match
+                text = text.replace(
+                    "[ACTION: " + action + "; BOOK_TITLE: " + book_title + "; AUTHOR: " + author + "; GENRE: " + genre + "]",
+                    "")
 
-        return action, book_title, text
+        return action, book_title, author, genre, text

@@ -2,8 +2,6 @@ import streamlit as st
 from BookManager import BookManager
 from Chatbot import Chatbot
 
-OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"
-
 
 def initialize_session_state():
     """
@@ -28,7 +26,7 @@ def app():
 
     question = st.text_area("Ask me anything:")
 
-    chatbot = Chatbot(openai_api_key=OPENAI_API_KEY)
+    chatbot = Chatbot()
 
     with open('prompt.txt', 'r') as file:
         # Read the contents of the file
@@ -40,8 +38,8 @@ def app():
 
     st.session_state.books_dict = book_manager.get_books()
 
-    books = format_books_dict_to_string(st.session_state.books_dict)
-    st.session_state.messages.append({"role": "system", "content": books})
+    # books = format_books_dict_to_string(st.session_state.books_dict)
+    # st.session_state.messages.append({"role": "system", "content": books})
 
     if st.button("Send"):
         st.session_state.messages, response, carts = chatbot.handle_query(st.session_state.messages, question)

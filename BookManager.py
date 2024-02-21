@@ -41,3 +41,24 @@ class BookManager:
         :rtype: list
         """
         return self.es_manager.search(index_name=self.index, query=query)
+
+    def recommend_books(self, book):
+        """
+        Recommend books similar to a given book based on vector similarity.
+
+        This method uses the vector representation of the provided book object and employs
+        Elasticsearch's script_score query to compute similarity scores with other books in
+        the database. It returns a list of books that are most similar to the given book,
+        based on their vector representations.
+
+        Parameters:
+        - book (Book): The book object to find similar books to. This object must have a 'vector'
+                       attribute that represents its combined title, author, and genre features.
+
+        Returns:
+        - list: A list of dictionaries, where each dictionary represents a book similar to the given book.
+                Each dictionary contains keys like 'title', 'author', 'genre', and 'vector', detailing
+                the properties of the recommended books.
+        """
+
+        return self.es_manager.search_vector(index_name=self.index, query_vector=book.vector)

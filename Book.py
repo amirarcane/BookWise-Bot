@@ -20,6 +20,12 @@ class Book:
         self.genre = genre
         self.vector = Vectorizer()
 
+        # Combine book parameters into a single string
+        combined_info = f"{title} {author} {genre}"
+
+        # Vectorize the combined string
+        self.vector = self.vector.vectorize(combined_info)
+
     def to_dict(self):
         """
         Convert the book entity to a dictionary suitable for indexing in Elasticsearch.
@@ -31,5 +37,5 @@ class Book:
             "title": self.title,
             "author": self.author,
             "genre": self.genre,
-            "vector": self.vector.vectorize(self.title).tolist()
+            "vector": self.vector.tolist()
         }
